@@ -23,19 +23,6 @@ import utils.DB;
 
 public class JavaUsers implements Users {
 
-	private static final String CONNECTION_URL = "..."; // Replace with values from the Azure portal
-	private static final String DB_KEY = "...";
-	private static final String DB_NAME = "...";
-
-	CosmosClient client = new CosmosClientBuilder()
-			.endpoint(CONNECTION_URL)
-			.key(DB_KEY)
-			.directMode() // comment this if not to use direct mode
-			.consistencyLevel(ConsistencyLevel.SESSION)
-			.connectionSharingAcrossClientsEnabled(true)
-			.contentResponseOnWriteEnabled(true) // On write, return the object written
-			.buildClient();
-
 	private static Logger Log = Logger.getLogger(JavaUsers.class.getName());
 
 	private static Users instance;
