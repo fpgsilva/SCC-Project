@@ -37,7 +37,10 @@
 					<url>http://maven:s3cret@127.0.0.1:8080/manager/text</url>
 					<server>tomcat-docker</server>
 					<update>true</update>
-					<path>/lab1</path>
+					<path>/tukano</path>
+					<username>maven</username>
+					<password>s3cret</password>
+
 				</configuration>
 			</plugin>
 			<plugin>
