@@ -8,7 +8,7 @@ import org.hibernate.Session;
 
 import tukano.api.Result;
 
-public class DB { // interface
+public class DB {
 
 	public static <T> List<T> sql(String query, Class<T> clazz) {
 		return Hibernate.getInstance().sql(query, clazz);
