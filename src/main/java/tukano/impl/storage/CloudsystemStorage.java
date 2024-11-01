@@ -8,35 +8,30 @@ import static tukano.api.Result.ErrorCode.INTERNAL_ERROR;
 import static tukano.api.Result.ErrorCode.NOT_FOUND;
 
 import com.azure.core.util.BinaryData;
-import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobContainerClientBuilder;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.function.Consumer;
 
 import tukano.api.Result;
 import utils.Hash;
-import utils.IO;
 
 public class CloudsystemStorage implements BlobStorage {
     private final String rootDir;
     private static final int CHUNK_SIZE = 4096;
     private static final String DEFAULT_ROOT_DIR = "/tmp/";
 
-    private static final String CONTAINER_NAME = "";
+
+    private static final String CONTAINER_NAME = "sccproj1";
+    private static final String storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=sccproj1;AccountKey=yNWoPKuCi68wDYNpbuqT7CNvBpw8gg+1HoIFK5xFa9IvfFDQyIo9aALGNTpndALy4MBRgAKmiO68+AStalwrjg==;EndpointSuffix=core.windows.net";
+
 
     public CloudsystemStorage() {
         this.rootDir = DEFAULT_ROOT_DIR;
     }
 
-    private static final String storageConnectionString = "";
     private BlobContainerClient containerClient = new BlobContainerClientBuilder()
             .connectionString(storageConnectionString)
             .containerName(CONTAINER_NAME)

@@ -18,9 +18,11 @@ import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 
 public class CosmosDBLayer {
-	private static final String CONNECTION_URL = "https://sc2425smd.documents.azure.com:443/"; // replace with your own
-	private static final String DB_KEY = "s4kZfLOhVrkLPvIHXtPNgw8MShc7ttCdExTh4ga8WwYqxMoGLP7qWW1sKlQKwZk6hcliXrj3NS13ACDbjROLQA==";
-	private static final String DB_NAME = "scc2425lab3";
+
+	private static final String CONNECTION_URL = "https://scc7052570596.documents.azure.com:443/"; // replace with your own
+	private static final String DB_KEY = "6aeKWtHTfWJesuoSDaNJixY2rjb4RNdlRICI7NIQy1lJqz3KtIDeEdissg9ByjFvNc6cICZHBY1rACDbWquzGg==";
+	private static final String DB_NAME = "scc7052570596";
+
 	private static final String USERS_CONTAINER = "users";
 	private static final String SHORTS_CONTAINER = "shorts";
 	private static final String FOLLOWS_CONTAINER = "follows";
@@ -73,6 +75,7 @@ public class CosmosDBLayer {
 	public <T> Result<T> getOne(String id, Class<T> clazz) {
 		return tryCatch(() -> container.readItem(id, new PartitionKey(id), clazz).getItem());
 	}
+
 
 	public <T> Result<?> deleteOne(T obj) {
 		return tryCatch(() -> container.deleteItem(obj, new CosmosItemRequestOptions()).getItem());
