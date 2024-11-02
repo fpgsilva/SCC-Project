@@ -16,15 +16,18 @@ import com.azure.cosmos.ConsistencyLevel;
 import com.azure.cosmos.CosmosClient;
 import com.azure.cosmos.CosmosClientBuilder;
 
+import redis.clients.jedis.Jedis;
 import tukano.api.Result;
 import tukano.api.User;
 import tukano.api.Users;
+import tukano.impl.cache.RedisCache;
 import utils.DB;
+import utils.JSON;
 
 public class JavaUsers implements Users {
 
 	private static Logger Log = Logger.getLogger(JavaUsers.class.getName());
-
+	private static String MOST_RECENT_USERS_LIST = "MostRecentUsers";
 	private static Users instance;
 
 	synchronized public static Users getInstance() {
@@ -43,7 +46,21 @@ public class JavaUsers implements Users {
 		if (badUserInfo(user))
 			return error(BAD_REQUEST);
 
-		return errorOrValue(DB.insertOne(user), user.getUserId());
+		Result<User> dbResult = DB.insertOne(user);
+		if (dbResult.isOK()) {
+
+			try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+				var key = "users:" + user.getUserId();
+				var value = JSON.encode(user);
+				jedis.set(key, value);
+
+				jedis.lpush(MOST_RECENT_USERS_LIST, value);
+				if (jedis.llen(MOST_RECENT_USERS_LIST) > 5) {
+					jedis.ltrim(MOST_RECENT_USERS_LIST, 0, 4);
+				}
+			}
+		}
+		return errorOrValue(dbResult, user.getUserId());
 	}
 
 	@Override
@@ -52,6 +69,15 @@ public class JavaUsers implements Users {
 
 		if (userId == null)
 			return error(BAD_REQUEST);
+
+		try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+			var key = "users:" + userId;
+			var value = jedis.get(key);
+			if (value != null) {
+				User user = JSON.decode(value, User.class);
+				return validatedUserOrError(Result.ok(user), pwd);
+			}
+		}
 
 		return validatedUserOrError(DB.getOne(userId, User.class), pwd);
 	}
@@ -64,7 +90,16 @@ public class JavaUsers implements Users {
 			return error(BAD_REQUEST);
 
 		return errorOrResult(validatedUserOrError(DB.getOne(userId, User.class), pwd),
-				user -> DB.updateOne(user.updateFrom(other)));
+				user -> {
+					var updatedUser = user.updateFrom(other);
+
+					try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+						var key = "users:" + userId;
+						var value = JSON.encode(updatedUser);
+						jedis.set(key, value);
+					}
+					return DB.updateOne(updatedUser);
+				});
 	}
 
 	@Override
@@ -82,6 +117,11 @@ public class JavaUsers implements Users {
 				JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
 			}).start();
 
+			try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+				var key = "users:" + userId;
+				jedis.del(key);
+			}
+
 			return DB.deleteOne(user);
 		});
 	}
@@ -92,6 +132,7 @@ public class JavaUsers implements Users {
 
 		var query = format("SELECT * FROM User u WHERE UPPER(u.userId) LIKE '%%%s%%'", pattern.toUpperCase());
 		var hits = DB.sql(query, User.class)
+				.value()
 				.stream()
 				.map(User::copyWithoutPassword)
 				.toList();
