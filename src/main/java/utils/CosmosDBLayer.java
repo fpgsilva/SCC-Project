@@ -7,6 +7,8 @@ import tukano.api.Result;
 import tukano.api.Result.ErrorCode;
 import java.util.function.Supplier;
 
+import org.hsqldb.persist.Log;
+
 import com.azure.cosmos.ConsistencyLevel;
 import com.azure.cosmos.CosmosClient;
 import com.azure.cosmos.CosmosClientBuilder;
@@ -17,11 +19,13 @@ import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 
+import java.util.logging.Logger;
+
 public class CosmosDBLayer {
 
-	private static final String CONNECTION_URL = System.getenv("COSMOSDB_URL");
-	private static final String DB_KEY = System.getenv("COSMOSDB_KEY");
-	private static final String DB_NAME = System.getenv("COSMOSDB_DATABASE");
+	private static final String CONNECTION_URL = "https://cosmos70525.documents.azure.com:443/";
+	private static final String DB_KEY = "8BJx0GsRdzts95nzS81jcE5UZrzqZgz7Rscc0bPMX6D4J7OWcNPT7XgPDEvoLaGahKdlGM0HeYiBACDb2skHJg==";
+	private static final String DB_NAME = "cosmosdb70525";
 
 	private static final String USERS_CONTAINER = "users";
 	private static final String SHORTS_CONTAINER = "shorts";
@@ -85,6 +89,8 @@ public class CosmosDBLayer {
 	}
 
 	public <T> Result<T> insertOne(T obj) {
+	
+
 		return tryCatch(() -> container.createItem(obj).getItem());
 	}
 

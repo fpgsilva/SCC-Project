@@ -45,9 +45,12 @@ public class JavaUsers implements Users {
 
 		if (badUserInfo(user))
 			return error(BAD_REQUEST);
+		
+		Log.info(() -> format("sporting: \n"));
 
+		
 		Result<User> dbResult = DB.insertOne(user);
-		if (dbResult.isOK()) {
+		/*if (dbResult.isOK()) {
 
 			try (Jedis jedis = RedisCache.getCachePool().getResource()) {
 				var key = "users:" + user.getUserId();
@@ -59,7 +62,7 @@ public class JavaUsers implements Users {
 					jedis.ltrim(MOST_RECENT_USERS_LIST, 0, 4);
 				}
 			}
-		}
+		}*/
 		return errorOrValue(dbResult, user.getUserId());
 	}
 
@@ -70,14 +73,14 @@ public class JavaUsers implements Users {
 		if (userId == null)
 			return error(BAD_REQUEST);
 
-		try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+		/*try (Jedis jedis = RedisCache.getCachePool().getResource()) {
 			var key = "users:" + userId;
 			var value = jedis.get(key);
 			if (value != null) {
 				User user = JSON.decode(value, User.class);
 				return validatedUserOrError(Result.ok(user), pwd);
 			}
-		}
+		}*/
 
 		return validatedUserOrError(DB.getOne(userId, User.class), pwd);
 	}
@@ -93,11 +96,11 @@ public class JavaUsers implements Users {
 				user -> {
 					var updatedUser = user.updateFrom(other);
 
-					try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+					/*try (Jedis jedis = RedisCache.getCachePool().getResource()) {
 						var key = "users:" + userId;
 						var value = JSON.encode(updatedUser);
 						jedis.set(key, value);
-					}
+					}*/
 					return DB.updateOne(updatedUser);
 				});
 	}
@@ -117,10 +120,10 @@ public class JavaUsers implements Users {
 				JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
 			}).start();
 
-			try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+			/*try (Jedis jedis = RedisCache.getCachePool().getResource()) {
 				var key = "users:" + userId;
 				jedis.del(key);
-			}
+			}*/
 
 			return DB.deleteOne(user);
 		});
