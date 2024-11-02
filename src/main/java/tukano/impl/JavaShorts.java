@@ -62,7 +62,7 @@ public class JavaShorts implements Shorts {
 
 		var query = format("SELECT count(l.shortId) FROM Likes l WHERE l.shortId = '%s'", shortId);
 		var likes = DB.sql(query, Long.class);
-		return errorOrValue(getOne(shortId, Short.class), shrt -> shrt.copyWithLikes_And_Token(likes.get(0)));
+		return errorOrValue(getOne(shortId, Short.class), shrt -> shrt.copyWithLikes_And_Token(likes.value().get(0)));
 	}
 
 	@Override

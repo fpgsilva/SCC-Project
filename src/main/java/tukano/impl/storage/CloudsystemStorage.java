@@ -23,10 +23,8 @@ public class CloudsystemStorage implements BlobStorage {
     private static final int CHUNK_SIZE = 4096;
     private static final String DEFAULT_ROOT_DIR = "/tmp/";
 
-
-    private static final String CONTAINER_NAME = "sccproj1";
-    private static final String storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=sccproj1;AccountKey=yNWoPKuCi68wDYNpbuqT7CNvBpw8gg+1HoIFK5xFa9IvfFDQyIo9aALGNTpndALy4MBRgAKmiO68+AStalwrjg==;EndpointSuffix=core.windows.net";
-
+    private static final String CONTAINER_NAME = "sccproj1"; // se tiveres um coitainer já criado substitui o nome aqui
+    private static final String storageConnectionString = System.getenv("BlobStoreConnection");
 
     public CloudsystemStorage() {
         this.rootDir = DEFAULT_ROOT_DIR;

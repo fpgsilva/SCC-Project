@@ -19,9 +19,9 @@ import com.azure.cosmos.models.PartitionKey;
 
 public class CosmosDBLayer {
 
-	private static final String CONNECTION_URL = "https://scc7052570596.documents.azure.com:443/"; // replace with your own
-	private static final String DB_KEY = "6aeKWtHTfWJesuoSDaNJixY2rjb4RNdlRICI7NIQy1lJqz3KtIDeEdissg9ByjFvNc6cICZHBY1rACDbWquzGg==";
-	private static final String DB_NAME = "scc7052570596";
+	private static final String CONNECTION_URL = System.getenv("COSMOSDB_URL");
+	private static final String DB_KEY = System.getenv("COSMOSDB_KEY");
+	private static final String DB_NAME = System.getenv("COSMOSDB_DATABASE");
 
 	private static final String USERS_CONTAINER = "users";
 	private static final String SHORTS_CONTAINER = "shorts";
@@ -75,7 +75,6 @@ public class CosmosDBLayer {
 	public <T> Result<T> getOne(String id, Class<T> clazz) {
 		return tryCatch(() -> container.readItem(id, new PartitionKey(id), clazz).getItem());
 	}
-
 
 	public <T> Result<?> deleteOne(T obj) {
 		return tryCatch(() -> container.deleteItem(obj, new CosmosItemRequestOptions()).getItem());
