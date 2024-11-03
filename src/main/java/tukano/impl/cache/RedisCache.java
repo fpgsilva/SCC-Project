@@ -123,7 +123,7 @@ public class RedisCache {
     }
 
     private <T> String getObjectId(T obj) {
-        switch (obj.getClass().getName()) {
+        switch (obj.getClass().getSimpleName()) {
             case "User":
                 return MOST_RECENT_USERS_LIST;
             case "Short":
@@ -138,7 +138,7 @@ public class RedisCache {
     }
 
     private <T> String getObjectList(T obj) {
-        switch (obj.getClass().getName()) {
+        switch (obj.getClass().getSimpleName()) {
             case "User":
                 return ((User) obj).getUserId();
             case "Short":

@@ -8,7 +8,6 @@ import static tukano.api.Result.errorOrVoid;
 import static tukano.api.Result.ok;
 import static tukano.api.Result.ErrorCode.BAD_REQUEST;
 import static tukano.api.Result.ErrorCode.FORBIDDEN;
-import static utils.DB.getOne;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +18,7 @@ import tukano.api.Result;
 import tukano.api.Short;
 import tukano.api.Shorts;
 import tukano.api.User;
+import tukano.impl.cache.Cache;
 import tukano.impl.data.Following;
 import tukano.impl.data.Likes;
 import tukano.impl.rest.TukanoRestServer;
@@ -49,7 +49,12 @@ public class JavaShorts implements Shorts {
 			var blobUrl = format("%s/%s/%s", TukanoRestServer.serverURI, Blobs.NAME, shortId);
 			var shrt = new Short(shortId, userId, blobUrl);
 
-			return errorOrValue(DB.insertOne(shrt), s -> s.copyWithLikes_And_Token(0));
+			Result<Short> dbResult = DB.insertOne(shrt);
+			if (dbResult.isOK()) {
+				Cache.insertOne(shrt);
+			}
+
+			return errorOrValue(dbResult, s -> s.copyWithLikes_And_Token(0));
 		});
 	}
 
@@ -62,7 +67,14 @@ public class JavaShorts implements Shorts {
 
 		var query = format("SELECT count(l.shortId) FROM Likes l WHERE l.shortId = '%s'", shortId);
 		var likes = DB.sql(query, Long.class);
-		return errorOrValue(getOne(shortId, Short.class), shrt -> shrt.copyWithLikes_And_Token(likes.value().get(0)));
+
+		Result<Short> result = Cache.getOne(shortId, Short.class);
+
+		if (!result.isOK()) {
+			result = DB.getOne(shortId, Short.class);
+		}
+
+		return errorOrValue(result, shrt -> shrt.copyWithLikes_And_Token(likes.value().get(0)));
 	}
 
 	@Override
@@ -74,6 +86,7 @@ public class JavaShorts implements Shorts {
 			return errorOrResult(okUser(shrt.getOwnerId(), password), user -> {
 				return DB.transaction(hibernate -> {
 
+					// TODO
 					hibernate.remove(shrt);
 
 					var query = format("DELETE Likes l WHERE l.shortId = '%s'", shortId);
@@ -100,7 +113,24 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult(okUser(userId1, password), user -> {
 			var f = new Following(userId1, userId2);
-			return errorOrVoid(okUser(userId2), isFollowing ? DB.insertOne(f) : DB.deleteOne(f));
+
+			return errorOrVoid(okUser(userId2), follow -> {
+
+				if (isFollowing) {
+					Result<Following> dbResult = DB.insertOne(f);
+					if (dbResult.isOK()) {
+						Cache.insertOne(f);
+					}
+					return dbResult;
+
+				} else {
+					Result<Following> dbResult = DB.deleteOne(f);
+					if (dbResult.isOK()) {
+						Cache.deleteOne(f);
+					}
+					return dbResult;
+				}
+			});
 		});
 	}
 
@@ -119,7 +149,23 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult(getShort(shortId), shrt -> {
 			var l = new Likes(userId, shortId, shrt.getOwnerId());
-			return errorOrVoid(okUser(userId, password), isLiked ? DB.insertOne(l) : DB.deleteOne(l));
+			return errorOrVoid(okUser(userId, password), like -> {
+
+				if (isLiked) {
+					Result<Likes> dbResult = DB.insertOne(l);
+					if (dbResult.isOK()) {
+						Cache.insertOne(l);
+					}
+					return dbResult;
+
+				} else {
+					Result<Likes> dbResult = DB.deleteOne(l);
+					if (dbResult.isOK()) {
+						Cache.deleteOne(l);
+					}
+					return dbResult;
+				}
+			});
 		});
 	}
 
