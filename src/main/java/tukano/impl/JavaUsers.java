@@ -12,22 +12,15 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
-import com.azure.cosmos.ConsistencyLevel;
-import com.azure.cosmos.CosmosClient;
-import com.azure.cosmos.CosmosClientBuilder;
-
-import redis.clients.jedis.Jedis;
 import tukano.api.Result;
 import tukano.api.User;
 import tukano.api.Users;
-import tukano.impl.cache.RedisCache;
+import tukano.impl.cache.Cache;
 import utils.DB;
-import utils.JSON;
 
 public class JavaUsers implements Users {
 
 	private static Logger Log = Logger.getLogger(JavaUsers.class.getName());
-	private static String MOST_RECENT_USERS_LIST = "MostRecentUsers";
 	private static Users instance;
 
 	synchronized public static Users getInstance() {
@@ -43,28 +36,32 @@ public class JavaUsers implements Users {
 	public Result<String> createUser(User user) {
 		Log.info(() -> format("createUser : %s\n", user));
 
-		if (badUserInfo(user)){
+		if (badUserInfo(user)) {
 			System.out.println("BAD REQUEST CREATE USER");
 			return error(BAD_REQUEST);
 		}
-		
+
 		Log.info(() -> format("sporting: \n"));
 
-		
 		Result<User> dbResult = DB.insertOne(user);
-		/*if (dbResult.isOK()) {
+		if (dbResult.isOK()) {
+			Cache.insertOne(user);
+		}
 
-			try (Jedis jedis = RedisCache.getCachePool().getResource()) {
-				var key = "users:" + user.getUserId();
-				var value = JSON.encode(user);
-				jedis.set(key, value);
+		/*
+		 * try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+		 * var key = "users:" + user.getUserId();
+		 * var value = JSON.encode(user);
+		 * jedis.set(key, value);
+		 * 
+		 * jedis.lpush(MOST_RECENT_USERS_LIST, value);
+		 * if (jedis.llen(MOST_RECENT_USERS_LIST) > 5) {
+		 * jedis.ltrim(MOST_RECENT_USERS_LIST, 0, 4);
+		 * }
+		 * }
+		 * }
+		 */
 
-				jedis.lpush(MOST_RECENT_USERS_LIST, value);
-				if (jedis.llen(MOST_RECENT_USERS_LIST) > 5) {
-					jedis.ltrim(MOST_RECENT_USERS_LIST, 0, 4);
-				}
-			}
-		}*/
 		return errorOrValue(dbResult, user.getUserId());
 	}
 
@@ -75,16 +72,24 @@ public class JavaUsers implements Users {
 		if (userId == null)
 			return error(BAD_REQUEST);
 
-		/*try (Jedis jedis = RedisCache.getCachePool().getResource()) {
-			var key = "users:" + userId;
-			var value = jedis.get(key);
-			if (value != null) {
-				User user = JSON.decode(value, User.class);
-				return validatedUserOrError(Result.ok(user), pwd);
-			}
-		}*/
+		Result<User> result = Cache.getOne(userId, User.class);
 
-		return validatedUserOrError(DB.getOne(userId, User.class), pwd);
+		if (!result.isOK()) {
+			result = DB.getOne(userId, User.class);
+		}
+
+		/*
+		 * try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+		 * var key = "users:" + userId;
+		 * var value = jedis.get(key);
+		 * if (value != null) {
+		 * User user = JSON.decode(value, User.class);
+		 * return validatedUserOrError(Result.ok(user), pwd);
+		 * }
+		 * }
+		 */
+
+		return validatedUserOrError(result, pwd);
 	}
 
 	@Override
@@ -98,12 +103,20 @@ public class JavaUsers implements Users {
 				user -> {
 					var updatedUser = user.updateFrom(other);
 
-					/*try (Jedis jedis = RedisCache.getCachePool().getResource()) {
-						var key = "users:" + userId;
-						var value = JSON.encode(updatedUser);
-						jedis.set(key, value);
-					}*/
-					return DB.updateOne(updatedUser);
+					Result<User> dbResult = DB.updateOne(updatedUser);
+					if (dbResult.isOK()) {
+						Cache.updateOne(updatedUser);
+					}
+
+					/*
+					 * try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+					 * var key = "users:" + userId;
+					 * var value = JSON.encode(updatedUser);
+					 * jedis.set(key, value);
+					 * }
+					 */
+
+					return dbResult;
 				});
 	}
 
@@ -122,12 +135,20 @@ public class JavaUsers implements Users {
 				JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
 			}).start();
 
-			/*try (Jedis jedis = RedisCache.getCachePool().getResource()) {
-				var key = "users:" + userId;
-				jedis.del(key);
-			}*/
+			Result<User> dbResult = DB.deleteOne(user);
 
-			return DB.deleteOne(user);
+			if (dbResult.isOK()) {
+				Cache.deleteOne(user);
+			}
+
+			/*
+			 * try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+			 * var key = "users:" + userId;
+			 * jedis.del(key);
+			 * }
+			 */
+
+			return dbResult;
 		});
 	}
 
