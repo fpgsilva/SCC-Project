@@ -5,10 +5,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.hibernate.Session;
-import org.hsqldb.persist.Log;
 
 import tukano.api.Result;
-import java.util.logging.Logger;
 
 public class DB {
 

@@ -5,9 +5,8 @@ import java.util.List;
 
 import tukano.api.Result;
 import tukano.api.Result.ErrorCode;
-import java.util.function.Supplier;
 
-import org.hsqldb.persist.Log;
+import java.util.function.Supplier;
 
 import com.azure.cosmos.ConsistencyLevel;
 import com.azure.cosmos.CosmosClient;
@@ -18,8 +17,6 @@ import com.azure.cosmos.CosmosException;
 import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
-
-import java.util.logging.Logger;
 
 public class CosmosDBLayer {
 
@@ -60,8 +57,6 @@ public class CosmosDBLayer {
 	private CosmosContainer shorts_container;
 	private CosmosContainer follows_container;
 	private CosmosContainer likes_container;
-	
-
 
 	public CosmosDBLayer(CosmosClient client) {
 		this.client = client;
@@ -77,39 +72,40 @@ public class CosmosDBLayer {
 		likes_container = db.getContainer(LIKES_CONTAINER);
 
 	}
+
 	public void close() {
 		client.close();
 	}
 
 	private void selectContainer(String containerId) {
-		
+
 		switch (containerId) {
 			case "tukano.api.User":
 				System.out.println("called user container\n");
 				container = users_container;
 				break;
-	
+
 			case "tukano.api.Short":
 				container = shorts_container;
 				break;
-	
+
 			case "tukano.api.Follows":
 				container = follows_container;
 				break;
-	
+
 			case "tukano.api.Likes":
 				container = likes_container;
 				break;
-	
+
 			default:
 				System.out.println("called default\n");
 				break;
 		}
 	}
-	
+
 	public <T> Result<T> getOne(String id, Class<T> clazz) {
 		var cId = clazz.getName();
-		//var selectedContainer = selectContainer(cId);
+		// var selectedContainer = selectContainer(cId);
 		return tryCatch(() -> container.readItem(id, new PartitionKey(id), clazz).getItem(), cId);
 	}
 
