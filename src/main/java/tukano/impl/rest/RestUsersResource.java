@@ -18,6 +18,9 @@ public class RestUsersResource extends RestResource implements RestUsers {
 	
 	@Override
 	public String createUser(User user) {
+		System.out.println("Request user " + user.getDisplayName()+ "\n");
+		System.out.println("Request id of " + user.getUserId()+ "\n");
+
 		return super.resultOrThrow( impl.createUser( user));
 	}
 

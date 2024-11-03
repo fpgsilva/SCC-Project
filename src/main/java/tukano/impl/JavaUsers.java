@@ -43,8 +43,10 @@ public class JavaUsers implements Users {
 	public Result<String> createUser(User user) {
 		Log.info(() -> format("createUser : %s\n", user));
 
-		if (badUserInfo(user))
+		if (badUserInfo(user)){
+			System.out.println("BAD REQUEST CREATE USER");
 			return error(BAD_REQUEST);
+		}
 		
 		Log.info(() -> format("sporting: \n"));
 

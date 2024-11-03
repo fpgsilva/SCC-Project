@@ -34,7 +34,7 @@ public class DB {
 	}
 
 	public static <T> Result<T> insertOne(T obj) {
-		
+		System.out.println("HELLO IM AT DB");
 		return Result.errorOrValue(CosmosDBLayer.getInstance().insertOne(obj), obj);
 	}
 
