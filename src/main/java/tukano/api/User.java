@@ -21,6 +21,10 @@ public class User{
 		this.displayName = displayName;
 	}
 
+	public String getId(){
+		return userId;
+	}
+
 	public String getUserId() {
 		return userId;
 	}

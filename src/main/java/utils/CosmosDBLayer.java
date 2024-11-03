@@ -56,6 +56,12 @@ public class CosmosDBLayer {
 	private CosmosClient client;
 	private CosmosDatabase db;
 	private CosmosContainer container;
+	private CosmosContainer users_container;
+	private CosmosContainer shorts_container;
+	private CosmosContainer follows_container;
+	private CosmosContainer likes_container;
+	
+
 
 	public CosmosDBLayer(CosmosClient client) {
 		this.client = client;
@@ -65,50 +71,85 @@ public class CosmosDBLayer {
 		if (db != null)
 			return;
 		db = client.getDatabase(DB_NAME);
-		container = db.getContainer(USERS_CONTAINER);
-		container = db.getContainer(SHORTS_CONTAINER);
-		container = db.getContainer(FOLLOWS_CONTAINER);
-		container = db.getContainer(LIKES_CONTAINER);
+		users_container = db.getContainer(USERS_CONTAINER);
+		shorts_container = db.getContainer(SHORTS_CONTAINER);
+		follows_container = db.getContainer(FOLLOWS_CONTAINER);
+		likes_container = db.getContainer(LIKES_CONTAINER);
 
 	}
-
 	public void close() {
 		client.close();
 	}
 
+	private void selectContainer(String containerId) {
+		
+		switch (containerId) {
+			case "tukano.api.User":
+				System.out.println("called user container\n");
+				container = users_container;
+				break;
+	
+			case "tukano.api.Short":
+				container = shorts_container;
+				break;
+	
+			case "tukano.api.Follows":
+				container = follows_container;
+				break;
+	
+			case "tukano.api.Likes":
+				container = likes_container;
+				break;
+	
+			default:
+				System.out.println("called default\n");
+				break;
+		}
+	}
+	
 	public <T> Result<T> getOne(String id, Class<T> clazz) {
-		return tryCatch(() -> container.readItem(id, new PartitionKey(id), clazz).getItem());
+		var cId = clazz.getName();
+		//var selectedContainer = selectContainer(cId);
+		return tryCatch(() -> container.readItem(id, new PartitionKey(id), clazz).getItem(), cId);
 	}
 
 	public <T> Result<?> deleteOne(T obj) {
-		return tryCatch(() -> container.deleteItem(obj, new CosmosItemRequestOptions()).getItem());
+		var cl = obj.getClass().getName();
+		return tryCatch(() -> container.deleteItem(obj, new CosmosItemRequestOptions()).getItem(), cl);
 	}
 
 	public <T> Result<T> updateOne(T obj) {
-		return tryCatch(() -> container.upsertItem(obj).getItem());
+		var cl = obj.getClass().getName();
+
+		return tryCatch(() -> container.upsertItem(obj).getItem(), cl);
 	}
 
 	public <T> Result<T> insertOne(T obj) {
-	
-
-		return tryCatch(() -> container.createItem(obj).getItem());
+		System.out.println("INSERT ONE COSMOS LAYER");
+		var cId = obj.getClass().getName();
+		return tryCatch(() -> container.createItem(obj).getItem(), cId);
 	}
 
 	public <T> Result<List<T>> query(Class<T> clazz, String queryStr) {
+		var cl = clazz.getName();
 		return tryCatch(() -> {
 			var res = container.queryItems(queryStr, new CosmosQueryRequestOptions(), clazz);
 			return res.stream().toList();
-		});
+		}, cl);
 	}
 
-	<T> Result<T> tryCatch(Supplier<T> supplierFunc) {
+	<T> Result<T> tryCatch(Supplier<T> supplierFunc, String classString) {
 		try {
 			init();
+			selectContainer(classString);
 			return Result.ok(supplierFunc.get());
 		} catch (CosmosException ce) {
 			// ce.printStackTrace();
+			System.out.println(ce);
+			System.out.println("YOYO COSMOS EXCEPTION AQUI");
 			return Result.error(errorCodeFromStatus(ce.getStatusCode()));
 		} catch (Exception x) {
+			System.out.println("EXCEPTION X TRY CATCH");
 			x.printStackTrace();
 			return Result.error(ErrorCode.INTERNAL_ERROR);
 		}
