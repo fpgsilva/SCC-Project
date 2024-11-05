@@ -16,8 +16,8 @@ import tukano.impl.data.Likes;
 import utils.JSON;
 
 public class RedisCache {
-    private static final String RedisHostname = "scccache7052570596.redis.cache.windows.net";
-    private static final String RedisKey = "YwnY7YKqRh86ZQA6j5YwgGvhT2zAtGDOwAzCaPC7W5g=";
+    private static final String RedisHostname = "redis70525northeurope.redis.cache.windows.net";
+    private static final String RedisKey = "XJule52lhBYg9TkFVIyZHoBvazpQkK2F4AzCaFewXUc=";
     private static final int REDIS_PORT = 6380;
     private static final int REDIS_TIMEOUT = 1000;
     private static final boolean Redis_USE_TLS = true;
@@ -40,7 +40,7 @@ public class RedisCache {
     public synchronized static JedisPool getCachePool() {
         if (jedis_instance != null)
             return jedis_instance;
-
+        System.out.println("WILL RETURN NEW CACHE");
         var poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(128);
         poolConfig.setMaxIdle(128);
@@ -57,19 +57,18 @@ public class RedisCache {
     public <T> Result<T> getOne(String id, Class<T> clazz) {
         System.out.println("GET ONE CACHE LAYER");
         var cId = clazz.getName();
-
+        System.out.println("class name on redis is ");
+        System.out.println(cId);
         return tryCatch(() -> {
             try (Jedis jedis = getCachePool().getResource()) {
                 var key = cId.toLowerCase() + ":" + id;
                 var value = jedis.get(key);
-
                 return value != null ? JSON.decode(value, clazz) : null;
             }
         }, cId);
     }
 
     public <T> Result<?> deleteOne(T obj) {
-        System.out.println("DELETE ONE CACHE LAYER");
         var cl = obj.getClass().getName();
 
         return tryCatch(() -> {
@@ -84,7 +83,6 @@ public class RedisCache {
     }
 
     public <T> Result<?> updateOne(T obj) {
-        System.out.println("UPDATE ONE CACHE LAYER");
         var cl = obj.getClass().getName();
 
         return tryCatch(() -> {
@@ -100,9 +98,8 @@ public class RedisCache {
     }
 
     public <T> Result<?> insertOne(T obj) {
-        System.out.println("INSERT ONE CACHE LAYER");
         var cId = obj.getClass().getName();
-
+        System.out.println(cId);
         return tryCatch(() -> {
             try (Jedis jedis = getCachePool().getResource()) {
                 var key = cId.toLowerCase() + ":" + getObjectId(obj);
@@ -122,30 +119,30 @@ public class RedisCache {
         }, cId);
     }
 
-    private <T> String getObjectId(T obj) {
-        switch (obj.getClass().getSimpleName()) {
-            case "User":
+    private <T> String getObjectList(T obj) {
+        switch (obj.getClass().getName()) {
+            case "tukano.api.User":
                 return MOST_RECENT_USERS_LIST;
-            case "Short":
+            case "tukano.api.Short":
                 return MOST_RECENT_SHORTS_LIST;
-            case "Likes":
+            case "tukano.impl.data.Likes":
                 return MOST_RECENT_LIKES_LIST;
-            case "Following":
+            case "tukano.impl.data.Following":
                 return MOST_RECENT_FOLLOWS_LIST;
             default:
                 return null;
         }
     }
 
-    private <T> String getObjectList(T obj) {
-        switch (obj.getClass().getSimpleName()) {
-            case "User":
+    private <T> String getObjectId(T obj) {
+        switch (obj.getClass().getName()) {
+            case "tukano.api.User":
                 return ((User) obj).getUserId();
-            case "Short":
+            case "tukano.api.Short":
                 return ((Short) obj).getShortId();
-            case "Likes":
+            case "tukano.impl.data.Likes":
                 return ((Likes) obj).getShortId() + ":" + ((Likes) obj).getUserId();
-            case "Following":
+            case "tukano.impl.data.Following":
                 return ((Following) obj).getFollowee() + ":" + ((Following) obj).getFollower();
             default:
                 return null;

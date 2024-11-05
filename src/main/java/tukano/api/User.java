@@ -1,5 +1,8 @@
 package tukano.api;
 
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
@@ -11,14 +14,16 @@ public class User{
 	private String pwd;
 	private String email;	
 	private String displayName;
-
-	public User() {}
+	private String id;
 	
-	public User(String userId, String pwd, String email, String displayName) {
-		this.pwd = pwd;
-		this.email = email;
-		this.userId = userId;
-		this.displayName = displayName;
+		public User() {}
+		
+		public User(String userId, String pwd, String email, String displayName) {
+			this.pwd = pwd;
+			this.email = email;
+			this.userId = userId;
+			this.displayName = displayName;
+			this.id = userId;
 	}
 
 	public String getId(){
