@@ -28,4 +28,3 @@ scenarios:
             pwd: "{{ pwd }}"
             email: "{{ email }}"
             displayName: "{{ displayName }}"
-            id: "{{ userId }}"
