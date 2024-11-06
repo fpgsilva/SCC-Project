@@ -5,7 +5,7 @@ config:
       duration: 1
       arrivalRate: 1
 scenarios:
-  - name: TuKanoRegister
+  - name: simpleQuery
     flow:
       - get:
           url: /users?query=john

@@ -17,7 +17,7 @@ config:
       - "email"
       - "displayName"
 scenarios:
-  - name: TuKanoRegister
+  - name: posting
     flow:
       - post:
           url: /users/

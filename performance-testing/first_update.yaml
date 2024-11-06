@@ -5,7 +5,7 @@ config:
       duration: 1
       arrivalRate: 1
 scenarios:
-  - name: TuKanoRegister
+  - name: simpleUpdate
     flow:
       - put:
           url: /users/john.c?pwd=1234

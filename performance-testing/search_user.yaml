@@ -1,0 +1,11 @@
+config:
+  target: http://127.0.0.1:8080/tukano/rest
+  phases:
+    - name: simple_search
+      duration: 1
+      arrivalRate: 1
+scenarios:
+  - name: searchUser
+    flow:
+      - get:
+          url: /users?query=john

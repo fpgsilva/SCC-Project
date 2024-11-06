@@ -6,7 +6,7 @@ config:
           arrivalRate: 1 # number of arrivals per second.
 
 scenarios:
-    - name: TuKanoHome
+    - name: simpleGet
       flow:
         - get:
             url: /users/john.c?pwd=1234
