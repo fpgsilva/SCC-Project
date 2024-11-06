@@ -1,0 +1,109 @@
+config:
+  target: http://127.0.0.1:8080/tukano/rest
+  phases:
+    - name: shorts_functions
+      duration: 1
+      arrivalCount: 1
+scenarios:
+  - name: TuKano Short Create
+    flow:
+      - post:
+          url: /users/
+          headers:
+            Content-Type: application/json
+          json:
+            userId: "john.c" # this parameter is filled from the fields above
+            pwd: "1234"
+            email: "john.c@fct.unl.pt"
+            displayName: "John C"
+
+      - post:
+          url: /users/
+          headers:
+            Content-Type: application/json
+          json:
+            userId: "john.c2" # this parameter is filled from the fields above
+            pwd: "1234"
+            email: "john.c2@fct.unl.pt"
+            displayName: "John C2"
+
+      - post:
+          url: /shorts/john.c?pwd=1234
+          capture:
+            json: "$"
+            as: "shortInfo1"
+
+      - post:
+          url: /shorts/john.c?pwd=1234
+          capture:
+            json: "$"
+            as: "shortInfo2"
+
+      - post:
+          url: /shorts/john.c?pwd=1234
+          capture:
+            json: "$"
+            as: "shortInfo3"
+
+      - get:
+          url: /shorts/{{shortInfo1.shortId}}
+          capture:
+            json: "$"
+            as: "short1"
+
+      - log: "{{short1}}"
+
+      - get:
+          url: /shorts/john.c/shorts
+          capture:
+            json: "$"
+            as: "john_shorts"
+
+      - log: "{{john_shorts}}"
+
+      - post:
+          url: /shorts/john2.c/john.c/followers?pwd=1234
+          headers:
+            Content-Type: application/json
+          body: true
+
+      - get:
+          url: /shorts/john.c/followers?pwd=1234
+          capture:
+            json: "$"
+            as: "followers_Johnc"
+
+      - log: "{{followers_Johnc}}"
+
+      - post:
+          url: /shorts/{{shortInfo1.shortId}}/john2.c/likes?pwd=1234
+          headers:
+            Content-Type: application/json
+          body: true
+
+      - get:
+          url: /shorts/{{shortInfo1.shortId}}/likes?pwd=1234
+          capture:
+            json: "$"
+            as: "likes_Short"
+
+      - log: "{{likes_Short}}"
+
+      - get:
+          url: /shorts/john2.c/feed?pwd=1234
+          capture:
+            json: "$"
+            as: "feed_Johnc2"
+
+      - log: "{{feed_Johnc2}}"
+
+      - delete:
+          url: /shorts/{{shortInfo1.shortId}}?pwd=1234
+
+      - get:
+          url: /shorts/john.c/shorts
+          capture:
+            json: "$"
+            as: "john_shorts"
+
+      - log: "{{john_shorts}}"
