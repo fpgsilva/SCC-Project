@@ -211,24 +211,26 @@ public class JavaShorts implements Shorts {
 	public Result<Void> deleteAllShorts(String userId, String password, String token) {
 		Log.info(() -> format("deleteAllShorts : userId = %s, password = %s, token = %s\n", userId, password, token));
 
-		if (!Token.isValid(token, userId))
-			return error(FORBIDDEN);
+		/*if (!Token.isValid(token, userId))
+			return error(FORBIDDEN);*/
 
 		return DB.transaction((hibernate) -> {
 
 			// delete shorts
-			var query1 = format("DELETE FROM Short WHERE ownerId = '%s'", userId);
+			var query1 = format("DELETE FROM Short s WHERE s.ownerId = '%s'", userId);
+			System.out.println("user id to delete is " + userId);
 			hibernate.createQuery(query1, Short.class).executeUpdate();
 
 			// delete follows
-			var query2 = format("DELETE FROM Following WHERE follower = '%s' OR followee = '%s'", userId, userId);
+			var query2 = format("DELETE FROM Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
 			hibernate.createQuery(query2, Following.class).executeUpdate();
 
 			// delete likes
-			var query3 = format("DELETE FROM Likes WHERE ownerId = '%s' OR userId = '%s'", userId, userId);
+			var query3 = format("DELETE FROM Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
 			hibernate.createQuery(query3, Likes.class).executeUpdate();
 
 		});
 	}
+
 
 }

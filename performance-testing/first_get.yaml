@@ -9,4 +9,4 @@ scenarios:
     - name: TuKanoHome
       flow:
         - get:
-            url: /users/kgallagher?pwd=easypass
+            url: /users/john.c?pwd=1234

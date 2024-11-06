@@ -74,7 +74,7 @@ function processRegisterReply(requestParams, response, context, ee, next) {
 
 function uploadRandomizedUser(requestParams, context, ee, next) {
     let username = randomUsername(10);
-    let pword = randomPassword(15);
+    let pword = 1234;
     let email = username + "@campus.fct.unl.pt";
     let displayName = username;
     

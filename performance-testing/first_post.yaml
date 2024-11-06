@@ -2,8 +2,8 @@ config:
   target: http://127.0.0.1:8080/tukano/rest
   phases:
     - name: simple_post
-      duration: 1
-      arrivalRate: 3
+      duration: 4
+      arrivalRate: 1
   payload:
     path: ./data/users.csv
     order: sequence # selects users sequentially, default is random
