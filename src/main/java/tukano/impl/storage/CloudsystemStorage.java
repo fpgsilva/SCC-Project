@@ -24,7 +24,7 @@ public class CloudsystemStorage implements BlobStorage {
     private static final String DEFAULT_ROOT_DIR = "/tmp/";
 
     private static final String CONTAINER_NAME = "shorts";
-    private static final String storageConnectionString = "BlobStoreConnection=DefaultEndpointsProtocol=https;AccountName=sto70525northeurope;AccountKey=Wb3k6znV3iiiKTVdkeaTzd3M/L/tPzjiJ77tFERdusUoEQwZbuUcBw+R4u/9S/5v6UEBwiLor3fk+AStUVjIlg==;EndpointSuffix=core.windows.net";
+    private static final String storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=sto70525northeurope;AccountKey=Y5LEG7nPUGNVekBEXMF7bokOxvCB13ZAsqP76bsfv89icNGzfMSlNsYX48IQBpMtK48GYJXO67/n+AStPeGhFQ==;EndpointSuffix=core.windows.net";
 
     public CloudsystemStorage() {
         this.rootDir = DEFAULT_ROOT_DIR;

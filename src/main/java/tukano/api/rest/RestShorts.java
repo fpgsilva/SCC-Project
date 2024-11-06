@@ -37,7 +37,7 @@ public interface RestShorts {
 	@DELETE
 	@Path("/{" + SHORT_ID + "}")
 	void deleteShort(@PathParam(SHORT_ID) String shortId, @QueryParam(PWD) String password);
-
+	
 	@GET
 	@Path("/{" + SHORT_ID + "}" )
 	@Produces(MediaType.APPLICATION_JSON)
