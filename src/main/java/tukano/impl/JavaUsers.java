@@ -113,7 +113,7 @@ public class JavaUsers implements Users {
 		Log.info(() -> format("searchUsers : patterns = %s\n", pattern));
 		//if(pattern == null) 
 		//pattern = "";
-		var query = format("SELECT * FROM User u WHERE UPPER(u.userId) LIKE '%%%s%%'", pattern.toUpperCase());
+		var query = format("SELECT * FROM users u WHERE UPPER(u.userId) LIKE '%%%s%%'", pattern.toUpperCase());
 		var hits = DB.sql(query, User.class)
 				.stream()
 				.map(User::copyWithoutPassword)
