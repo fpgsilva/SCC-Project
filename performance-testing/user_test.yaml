@@ -1,11 +1,11 @@
 config:
   target: http://127.0.0.1:8080/tukano/rest
   phases:
-    - name: blobs_functions
+    - name: users_functions
       duration: 1
       arrivalCount: 1
 scenarios:
-  - name: TuKano Blob Create
+  - name: TuKano User Create
     flow:
       - post:
           url: /users/
@@ -17,20 +17,21 @@ scenarios:
             email: "john.c@fct.unl.pt"
             displayName: "John C"
 
-      - post:
-          url: /shorts/john.c?pwd=1234
-          capture:
-            json: "$"
-            as: "shortInfo"
+      - get:
+          url: /users/john.c?pwd=1234
 
-      - log: "Blob url  {{shortInfo.blobUrl}}"
-
-      - post:
-          url: "{{shortInfo.blobUrl}}"
-          body: "this is a really good string to test stuff"
+      - put:
+          url: /users/john.c?pwd=1234
+          headers:
+            Content-Type: application/json
+          json:
+            userId: "john.c"
+            pwd: "1234"
+            email: "george@email"
+            displayName: "CoolName"
 
       - get:
-          url: "{{shortInfo.blobUrl}}"
+          url: /users?query=john
 
       - delete:
           url: /users/john.c?pwd=1234

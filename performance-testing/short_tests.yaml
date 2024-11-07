@@ -107,3 +107,9 @@ scenarios:
             as: "john_shorts"
 
       - log: "{{john_shorts}}"
+
+      - delete:
+          url: /users/john.c?pwd=1234
+
+      - delete:
+          url: /users/john.c2?pwd=1234
