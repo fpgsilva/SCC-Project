@@ -1,0 +1,18 @@
+config:
+  target: http://127.0.0.1:8080/tukano/rest
+  phases:
+    - name: simple_update
+      duration: 1
+      arrivalRate: 1  
+scenarios:
+  - name: updateUser
+    flow:
+      - put:
+          url: /users/john.c?pwd=1234
+          headers:
+            Content-Type: application/json
+          json:
+            userId: "john.c"
+            pwd: "1234"
+            email: "george@email"
+            displayName: "CoolName"

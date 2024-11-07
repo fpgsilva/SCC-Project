@@ -1,0 +1,37 @@
+config:
+  target: http://127.0.0.1:8080/tukano/rest
+  phases:
+    - name: users_functions
+      duration: 1
+      arrivalCount: 1
+scenarios:
+  - name: TuKano User Create
+    flow:
+      - post:
+          url: /users/
+          headers:
+            Content-Type: application/json
+          json:
+            userId: "john.c" # this parameter is filled from the fields above
+            pwd: "1234"
+            email: "john.c@fct.unl.pt"
+            displayName: "John C"
+
+      - get:
+          url: /users/john.c?pwd=1234
+
+      - put:
+          url: /users/john.c?pwd=1234
+          headers:
+            Content-Type: application/json
+          json:
+            userId: "john.c"
+            pwd: "1234"
+            email: "george@email"
+            displayName: "CoolName"
+
+      - get:
+          url: /users?query=john
+
+      - delete:
+          url: /users/john.c?pwd=1234

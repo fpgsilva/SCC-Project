@@ -8,7 +8,6 @@ import static tukano.api.Result.errorOrVoid;
 import static tukano.api.Result.ok;
 import static tukano.api.Result.ErrorCode.BAD_REQUEST;
 import static tukano.api.Result.ErrorCode.FORBIDDEN;
-import static utils.DB.getOne;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +18,7 @@ import tukano.api.Result;
 import tukano.api.Short;
 import tukano.api.Shorts;
 import tukano.api.User;
+import tukano.impl.cache.Cache;
 import tukano.impl.data.Following;
 import tukano.impl.data.Likes;
 import tukano.impl.rest.TukanoRestServer;
@@ -29,6 +29,7 @@ public class JavaShorts implements Shorts {
 	private static Logger Log = Logger.getLogger(JavaShorts.class.getName());
 
 	private static Shorts instance;
+	private static boolean cache = true;
 
 	synchronized public static Shorts getInstance() {
 		if (instance == null)
@@ -49,7 +50,12 @@ public class JavaShorts implements Shorts {
 			var blobUrl = format("%s/%s/%s", TukanoRestServer.serverURI, Blobs.NAME, shortId);
 			var shrt = new Short(shortId, userId, blobUrl);
 
-			return errorOrValue(DB.insertOne(shrt), s -> s.copyWithLikes_And_Token(0));
+			Result<Short> dbResult = DB.insertOne(shrt);
+			if (cache & dbResult.isOK()) {
+				Cache.insertOne(shrt);
+			}
+
+			return errorOrValue(dbResult, s -> s.copyWithLikes_And_Token(0));
 		});
 	}
 
@@ -62,7 +68,18 @@ public class JavaShorts implements Shorts {
 
 		var query = format("SELECT count(l.shortId) FROM Likes l WHERE l.shortId = '%s'", shortId);
 		var likes = DB.sql(query, Long.class);
-		return errorOrValue(getOne(shortId, Short.class), shrt -> shrt.copyWithLikes_And_Token(likes.value().get(0)));
+		Result<Short> result;
+		if (cache) {
+			result = Cache.getOne(shortId, Short.class);
+
+			if (!result.isOK()) {
+				result = DB.getOne(shortId, Short.class);
+			}
+		} else {
+			result = DB.getOne(shortId, Short.class);
+		}
+
+		return errorOrValue(result, shrt -> shrt.copyWithLikes_And_Token(likes.get(0)));
 	}
 
 	@Override
@@ -76,7 +93,7 @@ public class JavaShorts implements Shorts {
 
 					hibernate.remove(shrt);
 
-					var query = format("DELETE Likes l WHERE l.shortId = '%s'", shortId);
+					var query = format("DELETE FROM Likes WHERE shortId = '%s'", shortId);
 					hibernate.createNativeQuery(query, Likes.class).executeUpdate();
 
 					JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get());
@@ -93,6 +110,7 @@ public class JavaShorts implements Shorts {
 		return errorOrValue(okUser(userId), DB.sql(query, String.class));
 	}
 
+	//we dont save follows on cache
 	@Override
 	public Result<Void> follow(String userId1, String userId2, boolean isFollowing, String password) {
 		Log.info(() -> format("follow : userId1 = %s, userId2 = %s, isFollowing = %s, pwd = %s\n", userId1, userId2,
@@ -100,7 +118,16 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult(okUser(userId1, password), user -> {
 			var f = new Following(userId1, userId2);
-			return errorOrVoid(okUser(userId2), isFollowing ? DB.insertOne(f) : DB.deleteOne(f));
+
+			return errorOrVoid(okUser(userId2), follow -> {
+
+				if (isFollowing) {
+					return DB.insertOne(f);
+
+				} else {
+					return DB.deleteOne(f);
+				}
+			});
 		});
 	}
 
@@ -112,6 +139,7 @@ public class JavaShorts implements Shorts {
 		return errorOrValue(okUser(userId, password), DB.sql(query, String.class));
 	}
 
+	// we dont save likes on cache
 	@Override
 	public Result<Void> like(String shortId, String userId, boolean isLiked, String password) {
 		Log.info(() -> format("like : shortId = %s, userId = %s, isLiked = %s, pwd = %s\n", shortId, userId, isLiked,
@@ -119,7 +147,16 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult(getShort(shortId), shrt -> {
 			var l = new Likes(userId, shortId, shrt.getOwnerId());
-			return errorOrVoid(okUser(userId, password), isLiked ? DB.insertOne(l) : DB.deleteOne(l));
+			return errorOrVoid(okUser(userId, password), like -> {
+
+				if (isLiked) {
+					return DB.insertOne(l);
+
+				} else {
+					return DB.deleteOne(l);
+
+				}
+			});
 		});
 	}
 
@@ -166,21 +203,24 @@ public class JavaShorts implements Shorts {
 	public Result<Void> deleteAllShorts(String userId, String password, String token) {
 		Log.info(() -> format("deleteAllShorts : userId = %s, password = %s, token = %s\n", userId, password, token));
 
-		if (!Token.isValid(token, userId))
-			return error(FORBIDDEN);
+		/*
+		 * if (!Token.isValid(token, userId))
+		 * return error(FORBIDDEN);
+		 */
 
 		return DB.transaction((hibernate) -> {
 
 			// delete shorts
-			var query1 = format("DELETE Short s WHERE s.ownerId = '%s'", userId);
+			var query1 = format("DELETE FROM Short s WHERE s.ownerId = '%s'", userId);
+			System.out.println("user id to delete is " + userId);
 			hibernate.createQuery(query1, Short.class).executeUpdate();
 
 			// delete follows
-			var query2 = format("DELETE Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
+			var query2 = format("DELETE FROM Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
 			hibernate.createQuery(query2, Following.class).executeUpdate();
 
 			// delete likes
-			var query3 = format("DELETE Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
+			var query3 = format("DELETE FROM Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
 			hibernate.createQuery(query3, Likes.class).executeUpdate();
 
 		});

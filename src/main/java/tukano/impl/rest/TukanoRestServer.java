@@ -22,7 +22,10 @@ public class TukanoRestServer extends Application {
 	private Set<Object> singletons = new HashSet<>();
 	private Set<Class<?>> resources = new HashSet<>();
 
+
 	public TukanoRestServer() {
+		serverURI = "http://127.0.0.1:8080/tukano/rest";
+		Token.setSecret(Args.valueOf("-secret", "spotingale"));
 		resources.add(RestBlobsResource.class);
 		resources.add(RestUsersResource.class);
 		resources.add(RestShortsResource.class);
@@ -34,9 +37,8 @@ public class TukanoRestServer extends Application {
 	}
 
 	public static void main(String[] args) throws Exception {
-		serverURI = "http://localhost:8080/tukano/rest";
+		serverURI = "http://127.0.0.1:8080/tukano/rest";
 		Args.use(args);
-		Token.setSecret(Args.valueOf("-secret", "sporting"));
 		new TukanoRestServer();
 	}
 }
