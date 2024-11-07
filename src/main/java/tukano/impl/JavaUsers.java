@@ -22,6 +22,7 @@ public class JavaUsers implements Users {
 
 	private static Logger Log = Logger.getLogger(JavaUsers.class.getName());
 	private static Users instance;
+	private static boolean cache = true;
 
 	synchronized public static Users getInstance() {
 		if (instance == null)
@@ -40,9 +41,8 @@ public class JavaUsers implements Users {
 			return error(BAD_REQUEST);
 		}
 
-
 		Result<User> dbResult = DB.insertOne(user);
-		if (dbResult.isOK()) {
+		if (cache & dbResult.isOK()) {
 			Cache.insertOne(user);
 		}
 
@@ -55,11 +55,14 @@ public class JavaUsers implements Users {
 
 		if (userId == null)
 			return error(BAD_REQUEST);
-		Result<User> result = Cache.getOne(userId, User.class);
-		System.out.println(result.value());
-		if (!result.isOK()) {
-			result = DB.getOne(userId, User.class);
+			Result<User> result;
+		if(cache){
+			 result = Cache.getOne(userId, User.class);
+			 if (!result.isOK()) {
+				result = DB.getOne(userId, User.class);
+			}
 		}
+		else result = DB.getOne(userId, User.class);
 		return validatedUserOrError(result, pwd);
 	}
 
@@ -75,7 +78,7 @@ public class JavaUsers implements Users {
 					var updatedUser = user.updateFrom(other);
 
 					Result<User> dbResult = DB.updateOne(updatedUser);
-					if (dbResult.isOK()) {
+					if (cache & dbResult.isOK()) {
 						Cache.updateOne(updatedUser);
 					}
 
@@ -100,7 +103,7 @@ public class JavaUsers implements Users {
 
 			Result<User> dbResult = DB.deleteOne(user);
 
-			if (dbResult.isOK()) {
+			if (cache & dbResult.isOK()) {
 				Cache.deleteOne(user);
 			}
 
@@ -111,8 +114,8 @@ public class JavaUsers implements Users {
 	@Override
 	public Result<List<User>> searchUsers(String pattern) {
 		Log.info(() -> format("searchUsers : patterns = %s\n", pattern));
-		//if(pattern == null) 
-		//pattern = "";
+		// if(pattern == null)
+		// pattern = "";
 		var query = format("SELECT * FROM users u WHERE UPPER(u.userId) LIKE '%%%s%%'", pattern.toUpperCase());
 		var hits = DB.sql(query, User.class)
 				.stream()

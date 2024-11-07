@@ -29,6 +29,7 @@ public class JavaShorts implements Shorts {
 	private static Logger Log = Logger.getLogger(JavaShorts.class.getName());
 
 	private static Shorts instance;
+	private static boolean cache = true;
 
 	synchronized public static Shorts getInstance() {
 		if (instance == null)
@@ -50,7 +51,7 @@ public class JavaShorts implements Shorts {
 			var shrt = new Short(shortId, userId, blobUrl);
 
 			Result<Short> dbResult = DB.insertOne(shrt);
-			if (dbResult.isOK()) {
+			if (cache & dbResult.isOK()) {
 				Cache.insertOne(shrt);
 			}
 
@@ -67,10 +68,14 @@ public class JavaShorts implements Shorts {
 
 		var query = format("SELECT count(l.shortId) FROM Likes l WHERE l.shortId = '%s'", shortId);
 		var likes = DB.sql(query, Long.class);
+		Result<Short> result;
+		if (cache) {
+			result = Cache.getOne(shortId, Short.class);
 
-		Result<Short> result = Cache.getOne(shortId, Short.class);
-
-		if (!result.isOK()) {
+			if (!result.isOK()) {
+				result = DB.getOne(shortId, Short.class);
+			}
+		} else {
 			result = DB.getOne(shortId, Short.class);
 		}
 
@@ -105,6 +110,7 @@ public class JavaShorts implements Shorts {
 		return errorOrValue(okUser(userId), DB.sql(query, String.class));
 	}
 
+	//we dont save follows on cache
 	@Override
 	public Result<Void> follow(String userId1, String userId2, boolean isFollowing, String password) {
 		Log.info(() -> format("follow : userId1 = %s, userId2 = %s, isFollowing = %s, pwd = %s\n", userId1, userId2,
@@ -116,18 +122,10 @@ public class JavaShorts implements Shorts {
 			return errorOrVoid(okUser(userId2), follow -> {
 
 				if (isFollowing) {
-					Result<Following> dbResult = DB.insertOne(f);
-					if (dbResult.isOK()) {
-						Cache.insertOne(f);
-					}
-					return dbResult;
+					return DB.insertOne(f);
 
 				} else {
-					Result<Following> dbResult = DB.deleteOne(f);
-					if (dbResult.isOK()) {
-						Cache.deleteOne(f);
-					}
-					return dbResult;
+					return DB.deleteOne(f);
 				}
 			});
 		});
@@ -141,6 +139,7 @@ public class JavaShorts implements Shorts {
 		return errorOrValue(okUser(userId, password), DB.sql(query, String.class));
 	}
 
+	// we dont save likes on cache
 	@Override
 	public Result<Void> like(String shortId, String userId, boolean isLiked, String password) {
 		Log.info(() -> format("like : shortId = %s, userId = %s, isLiked = %s, pwd = %s\n", shortId, userId, isLiked,
@@ -151,18 +150,11 @@ public class JavaShorts implements Shorts {
 			return errorOrVoid(okUser(userId, password), like -> {
 
 				if (isLiked) {
-					Result<Likes> dbResult = DB.insertOne(l);
-					if (dbResult.isOK()) {
-						Cache.insertOne(l);
-					}
-					return dbResult;
+					return DB.insertOne(l);
 
 				} else {
-					Result<Likes> dbResult = DB.deleteOne(l);
-					if (dbResult.isOK()) {
-						Cache.deleteOne(l);
-					}
-					return dbResult;
+					return DB.deleteOne(l);
+
 				}
 			});
 		});
@@ -211,8 +203,10 @@ public class JavaShorts implements Shorts {
 	public Result<Void> deleteAllShorts(String userId, String password, String token) {
 		Log.info(() -> format("deleteAllShorts : userId = %s, password = %s, token = %s\n", userId, password, token));
 
-		/*if (!Token.isValid(token, userId))
-			return error(FORBIDDEN);*/
+		/*
+		 * if (!Token.isValid(token, userId))
+		 * return error(FORBIDDEN);
+		 */
 
 		return DB.transaction((hibernate) -> {
 
@@ -231,6 +225,5 @@ public class JavaShorts implements Shorts {
 
 		});
 	}
-
 
 }
