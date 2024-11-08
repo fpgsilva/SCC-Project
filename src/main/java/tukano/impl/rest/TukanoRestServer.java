@@ -24,7 +24,7 @@ public class TukanoRestServer extends Application {
 
 
 	public TukanoRestServer() {
-		serverURI = "http://127.0.0.1:8080/tukano/rest";
+		serverURI = "https://scc-project-1-2425.azurewebsites.net/rest";
 		Token.setSecret(Args.valueOf("-secret", "spotingale"));
 		resources.add(RestBlobsResource.class);
 		resources.add(RestUsersResource.class);

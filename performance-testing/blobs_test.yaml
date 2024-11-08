@@ -1,5 +1,5 @@
 config:
-  target: http://127.0.0.1:8080/tukano/rest
+  target: https://scc-project-1-2425.azurewebsites.net/rest
   phases:
     - name: blobs_functions
       duration: 1
